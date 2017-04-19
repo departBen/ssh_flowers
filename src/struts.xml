@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC "-//Apache Software Foundation//DTD Struts Configuration 2.1//EN" "http://struts.apache.org/dtds/struts-2.1.dtd">
+<struts>
+	<!--开发模式 -->
+	<constant name="struts.devMode" value="true" />
+	<!--默认utf-8编码 -->
+	<constant name="struts.i18n.encoding" value="UTF-8" />
+	<!--关闭缓存静态内容 -->
+	<constant name="struts.serve.static.browserCache" value="false" />
+
+	<constant name="struts.action.extension" value="action" />
+	<!--支持动态方法调用 -->
+	<constant name="struts.enable.DynamicMethodInvocation" value="true" />
+	<!--不使用struts标签控制表单样式 -->
+	<constant name="struts.ui.theme" value="simple" />
+	<constant name="struts.ui.templateDir" value="template" />
+	<constant name="struts.ui.templateSuffix" value="ftl" />
+
+
+	<package name="login" extends="struts-default">
+	
+		<!-- 定义登陆拦截器 -->
+		<interceptors>
+			<interceptor name="loginInterceptor"
+				class="com.bs.flower.interceptor.LoginInterceptor" />
+			<interceptor name="adminInterceptor"
+				class="com.bs.flower.interceptor.AdminInterceptor" />
+			<!-- 用户	 -->
+			<interceptor-stack name="mydefault">
+				<interceptor-ref name="loginInterceptor" />
+				<interceptor-ref name="defaultStack"></interceptor-ref>
+			</interceptor-stack>
+			<!-- 管理员 -->
+			<interceptor-stack name="admindefault">
+				<interceptor-ref name="adminInterceptor" />
+				<interceptor-ref name="defaultStack"></interceptor-ref>
+			</interceptor-stack>
+		</interceptors>
+		
+		<global-results>
+			<result name="login" type="redirect">/login.jsp</result>
+		</global-results>
+
+		<!--无需登陆可用 -->
+		<action name="userAction" class="userAction" method="{*}">
+			<result>/register.jsp</result> 
+			<result name="login success">/index.jsp</result>
+			<result name="logout">/index.jsp</result>
+			<result name="login">/login.jsp</result>
+		</action>
+		<action name="adminLoginAction" class="com.bs.flower.action.AdminAction" method="adminLogin">
+			<result name="login success">/admin/admin_index.jsp</result>
+			<result name="login">/admin/admin_login.jsp</result>
+		</action>
+		<action name="flowerAction" class="com.bs.flower.action.FlowerAction" method="{*}">
+			<result name="success">/modular/menu.jsp</result>
+			<result name="newFlower">/modular/newFlower.jsp</result>
+			<result name="pageFlower">/pages/browseFlower.jsp</result>
+		</action>
+
+		<!--需要 登陆 -->
+		<action name="shoppingAction" class="shoppingAction" method="{*}">
+			<result name="success">/pages/add_success.jsp</result>
+			<result name="updateCartSuccess">/pages/cart.jsp</result>
+			<result name="error">/pages/cart.jsp</result>
+			<interceptor-ref name="mydefault"></interceptor-ref>
+		</action>
+
+		<action name="orderAction" class="shoppingAction" method="commitOrder">
+			<result name="error">/login.jsp</result>
+			<result name="success">/pages/order_success.jsp</result>
+			<interceptor-ref name="mydefault"></interceptor-ref>
+		</action>
+		
+		<action name="adminAction" class="com.bs.flower.action.AdminAction" method="{*}">
+			<result name="addCateSucess">/admin/admin_index.jsp</result>
+			<result name="addFlowersView">/admin/admin_add_flowers.jsp</result>
+			<result name="pageFlowers">/admin/admin_flowers.jsp</result>
+			<result name="ordersList">/admin/admin_orders.jsp</result>
+			<result name="userManage">/admin/admin_usersEdit.jsp</result>
+			<result name="userEdit">/admin/userEdit.jsp</result>
+			<result name="logout">/admin/admin_login.jsp</result>
+			<interceptor-ref name="admindefault"></interceptor-ref>
+		</action>
+	</package>
+</struts>    

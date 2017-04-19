@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.1.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	default-autowire="byName">
+
+
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="driverClassName" value="com.mysql.jdbc.Driver"></property>
+
+		<property name="url"
+			value="jdbc:mysql://localhost:3306/shsflower?useUnicode=true&amp;characterEncoding=utf-8">
+		</property>
+		<property name="username" value="root"></property>
+		<property name="password" value="root"></property>
+	</bean>
+	<bean id="sessionFactory"
+		class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
+		<property name="dataSource">
+			<ref bean="dataSource" />
+		</property>
+		<property name="hibernateProperties">
+			<props>
+				<prop key="hibernate.dialect">
+					org.hibernate.dialect.MySQLDialect
+				</prop>
+				<prop key="hibernate.current_session_context_class">thread</prop>
+			</props>
+		</property>
+		<property name="mappingResources">
+			<list>
+				<value>com/bs/flower/entity/Admin.hbm.xml</value>
+				<value>com/bs/flower/entity/Users.hbm.xml</value>
+				<value>com/bs/flower/entity/Orders.hbm.xml</value>
+				<value>
+					com/bs/flower/entity/OrdersDetails.hbm.xml
+				</value>
+				<value>com/bs/flower/entity/Category.hbm.xml</value>
+				<value>com/bs/flower/entity/Goods.hbm.xml</value>
+			</list>
+		</property>
+	</bean>
+
+	<!--userDao注入 -->
+	<bean id="userDao" class="com.bs.flower.dao.impl.UserDaoImpl">
+		<property name="sessionFactory">
+			<ref bean="sessionFactory" />
+		</property>
+	</bean>
+	<bean id="categoryDao" class="com.bs.flower.dao.impl.CategoryDaoImpl">
+		<property name="sessionFactory">
+			<ref bean="sessionFactory" />
+		</property>
+	</bean>
+	<bean id="flowerDao" class="com.bs.flower.dao.impl.FlowerDaoImpl">
+		<property name="sessionFactory">
+			<ref bean="sessionFactory" />
+		</property>
+	</bean>
+	<!-- 事务管理增强 -->
+	<bean id="affairAdvice" class="com.bs.flower.advice.AffairForHibernate">
+		<property name="sessionFactory">
+			<ref bean="sessionFactory" />
+		</property>
+	</bean>
+	<!--serviceTarget -->
+	<bean id="userServiceTarget" class="com.bs.flower.service.impl.UserServiceImpl">
+		<property name="userDao">
+			<ref bean="userDao" />
+		</property>
+	</bean>
+	<bean id="categoryServiceTarget" class="com.bs.flower.service.impl.CategoryServiceImpl">
+		<property name="categoryDao">
+			<ref bean="categoryDao" />
+		</property>
+	</bean>
+	<bean id="flowerServiceTarget" class="com.bs.flower.service.impl.FlowerServiceImpl">
+		<property name="flowerDao">
+			<ref bean="flowerDao" />
+		</property>
+	</bean>
+
+	<!--userServiceAOP -->
+	<bean id="userService" class="org.springframework.aop.framework.ProxyFactoryBean"
+		p:proxyInterfaces="com.bs.flower.service.UserService"
+		p:interceptorNames="affairAdvice" p:target-ref="userServiceTarget">
+	</bean>
+	<bean id="categoryService" class="org.springframework.aop.framework.ProxyFactoryBean"
+		p:proxyInterfaces="com.bs.flower.service.CategoryService"
+		p:interceptorNames="affairAdvice" p:target-ref="categoryServiceTarget">
+	</bean>
+	<bean id="flowerService" class="org.springframework.aop.framework.ProxyFactoryBean"
+		p:proxyInterfaces="com.bs.flower.service.FlowerService"
+		p:interceptorNames="affairAdvice" p:target-ref="flowerServiceTarget">
+	</bean>
+	<!--action注入 -->
+	<bean id="userAction" class="com.bs.flower.action.UserAction">
+		<property name="userService">
+			<ref bean="userService" />
+		</property>
+	</bean>
+	<bean id="flowerAction" class="com.bs.flower.action.FlowerAction">
+		<property name="categoryService">
+			<ref bean="categoryService" />
+		</property>
+		<property name="flowerService">
+			<ref bean="flowerService" />
+		</property>
+	</bean>
+	<bean id="shoppingAction" class="com.bs.flower.action.ShoppingAction">
+		<property name="flowerService">
+			<ref bean="flowerService" />
+		</property>
+	</bean>
+	<bean id="adminAction" class="com.bs.flower.action.AdminAction">
+		<property name="categoryService">
+			<ref bean="categoryService"/>
+		</property>
+		<property name="flowerService">
+			<ref bean="flowerService"/>
+		</property>
+		<property name="userService">
+			<ref bean="userService"/>
+		</property>
+	</bean>
+
+	<bean id="transactionManager"
+		class="org.springframework.orm.hibernate4.HibernateTransactionManager">
+		<property name="sessionFactory" ref="sessionFactory" />
+	</bean>
+	<tx:annotation-driven transaction-manager="transactionManager" />
+</beans>
